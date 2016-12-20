@@ -19,14 +19,15 @@ double  ** getReadedData(double(*)[]);
 int getRowNumber(double (*)[]);
 int getColumnNumber(double (*)[]);
 void initialization(char * );
-void calculateByType();
+
 int getSpaceNumbers(char *,int);
+void calculateByType(char);
 int main(){
 //get file path from the parameter
 // store the data.
 //initalization  suppos there is no value -300
 //initial arrays
-char * path = "testEnd.txt";
+char * path = "math.txt";
 //char * path = "testEnd.txt";
 initialization(path);
 
@@ -35,18 +36,16 @@ initialization(path);
 
 
 //output the format data
-printf("\n%s\n","after analysis" );
+printf("\n%s\n","please check your input data here :" );
 printfAllDataInOriginal(formatData,realRows,realColumns);
 //read choose from the console;
 char typeOfOperation;
 printf("%s\n", "please input 1 for the simplex. 2 for cutting. 3 for binary tree");
 typeOfOperation = getc(stdin);
-printf("%s\n","your choose is : " );
-fputc(typeOfOperation ,stdout);
-printf("%s\n","" );
+
 
 //calculate the result :
-calculateByType();
+calculateByType(typeOfOperation);
 //out put here 
 printf("the result is : \n");
 return 0;
@@ -64,7 +63,7 @@ void  getOriginalData(char* filePath,double (* dataArray)[N]){
 		printf("can't open file\n");
 	}else{
 		while((read = getline(&line,&len,fp))!=-1){
-		
+			//printf(" line data is :%s\n", line );
 			saveToArray(line,dataArray,row,len);
 			row++;				
 		}
@@ -79,7 +78,7 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 	int endIndex = 0;
 	int index = 0;
 	int getNumbers = getSpaceNumbers(charArray,len)+1;// the numbers should be the space in the array plus one;
-	printf("the number of the row :%d is %d\n",row,getNumbers );
+	//printf("the number of the row :%d is %d\n",row,getNumbers );
 	int i =0;
 	int numberParserd = 0;
 
@@ -110,13 +109,13 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 				startIndex++;//ensure that the start point to the non null field
 				*/
 				char item [10] = "";
-				printf("start at %s the length is %d\n", charArray+startIndex,length);
+				//printf("start at %s the length is %d\n", charArray+startIndex,length);
 				strncpy(item,charArray+startIndex,length);
-				printf("the iterm is :%s  the value is %f:\n",item ,atof(item));
+				//printf("the iterm is :%s  the value is %f:\n",item ,atof(item));
 				number = atof(item);
 				*(dataArray[row]+dataIndex++)= number;
 
-	            printf("number : %f data at array row :%d, index :%d value : %F endindex:%d \n"  ,number,row,dataIndex-1,*(dataArray[row]+dataIndex-1),endIndex);
+	            //printf("number : %f data at array row :%d, index :%d value : %F endindex:%d \n"  ,number,row,dataIndex-1,*(dataArray[row]+dataIndex-1),endIndex);
 				startIndex = endIndex+1;
 			}
 			index++;
@@ -129,7 +128,7 @@ void printfAllDataInOriginal(double **afterData ,int row, int column){
 	int i=0,j=0;
 	//int row = getRowNumber(original),column = getColumnNumber(original);
 	for( i=0;i<row;i++){
-		printf("the row %d",i);
+		printf("the %dth row :",i);
 		for(j=0;j<column;j++){
 			printf(" %f ",*(afterData[i]+j));//*(afterData[i]+j));				
 		}
@@ -220,14 +219,14 @@ void initialization(char * filePath){
 	//char * testend = "testEnd.txt";
 	// parser original data 
 	getOriginalData(filePath,data);
-
+	/*
 	printf("the initil matix is :\n");
 	for(i=0;i<13;i++){
 		printf("\n");
 	    for(j =0;j<13;j++)
 	        printf(" %f ",data[i][j]);
 	}
-
+	*/
 
 	// get useful data
 
@@ -236,8 +235,22 @@ void initialization(char * filePath){
 	formatData = getReadedData(data);
 
 }
-void calculateByType(){
+// router for different operation. and the progress can be output into files or just directly out at console
+void calculateByType(char typeOfOperation){
 	printf("%s\n", "here should be some functions here:");
+	printf("%s\n","your choose is : " );
+	fputc(typeOfOperation ,stdout);
+	printf("%s\n","" );
+	if(typeOfOperation == '1'){
+		// call function simplex
+		printf("%s\n", "you have choose to use simplex");
+	}else if(typeOfOperation == '2'){
+		// call function for cuttings
+		printf("%s\n", "you have choose to use cutting");
+	}else{
+		// call function for binary tree
+		printf("%s\n", "you have choose to use binary");
+	}
 }
 int getSpaceNumbers(char * line,int len){
 	int index = 0;
