@@ -20,20 +20,16 @@ int getRowNumber(double (*)[]);
 int getColumnNumber(double (*)[]);
 void initialization(char * );
 void calculateByType();
+int getSpaceNumbers(char *,int);
 int main(){
 //get file path from the parameter
 // store the data.
 //initalization  suppos there is no value -300
 //initial arrays
-char * path = "math.txt";
+char * path = "testEnd.txt";
+//char * path = "testEnd.txt";
 initialization(path);
-/*
-printf("the initil matix is :\n");
-for(i=0;i<13;i++){
-	printf("\n");
-    for(j =0;j<13;j++)
-        printf(" %f ",data[i][j]);
-}*/
+
 
 //let user to choose operation
 
@@ -82,10 +78,13 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 	int startIndex = 0;
 	int endIndex = 0;
 	int index = 0;
-	
+	int getNumbers = getSpaceNumbers(charArray,len)+1;// the numbers should be the space in the array plus one;
+	printf("the number of the row :%d is %d\n",row,getNumbers );
 	int i =0;
+	int numberParserd = 0;
 
 	while(index<len)
+	//while(numberParserd<getNumbers)
 	{
 
         if(*(charArray+index)!= ' '&&*(charArray+index)!='\n'&&*(charArray+index)!='.')
@@ -93,19 +92,35 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 			index++;
 		}else{
 			endIndex = index;
-			//get each item and then multiply;
-			int length = endIndex - startIndex;
-			double number = 0;//stored a number 
-//			printf("start index is %d, and the end index is %d the current index is %d\n",startIndex,endIndex,index);
-			while(startIndex < endIndex){
-				number += atof((charArray+startIndex))*pow(10,length-1);
-				startIndex++;
-				length -- ;				
+			if (endIndex >= startIndex+1&&strlen(charArray+startIndex)>0)
+			{
+				//get each item and then multiply;
+				int length = endIndex - startIndex;
+				double number = 0;//stored a number 
+	//			printf("start index is %d, and the end index is %d the current index is %d\n",startIndex,endIndex,index);
+				//printf("start index is %d length is %d\n",startIndex,length );
+				/*
+				while(startIndex<endIndex){
+					//number += ((int)(atof(charArray+startIndex)/pow(10,length-1)))*pow(10,length-1);
+					number = atof(charArray+startIndex);
+					printf("startIndex is : %d factor: %f base :%d power: %d\n",startIndex,atof(charArray+startIndex),10,length-1);
+					startIndex++;
+					length -- ;				
+				}
+				startIndex++;//ensure that the start point to the non null field
+				*/
+				char item [10] = "";
+				printf("start at %s the length is %d\n", charArray+startIndex,length);
+				strncpy(item,charArray+startIndex,length);
+				printf("the iterm is :%s  the value is %f:\n",item ,atof(item));
+				number = atof(item);
+				*(dataArray[row]+dataIndex++)= number;
+
+	            printf("number : %f data at array row :%d, index :%d value : %F endindex:%d \n"  ,number,row,dataIndex-1,*(dataArray[row]+dataIndex-1),endIndex);
+				startIndex = endIndex+1;
 			}
-			startIndex++;//ensure that the start point to the non null field
-			*(dataArray[row]+dataIndex++)= number;
-            printf("number : %f data at array row :%d, index :%d value :%F\n",number,row,dataIndex-1,*(dataArray[row]+dataIndex-1));
 			index++;
+			
 		}
 	}
    
@@ -145,8 +160,11 @@ double ** getReadedData(double (*original) [N]){
 	for (i = 0; i < rowNumber; ++i)
 	{
 		for (j = 0; j < columnNumber; ++j)
-		{
-			returnData[i][j] = *(original[i]+j);
+		{	
+			if(*(original[i]+j) == initialValueForArray){
+				returnData[i][j] = 0.0;
+			}else
+				returnData[i][j] = *(original[i]+j);
 		}
 	}
 	return returnData;
@@ -186,15 +204,33 @@ void initialization(char * filePath){
 
 	double data[M][N]; 
 	int i =0,j=0;
-	for(;i<M;i++)
-		for(;j<N;j++)
+	for(i=0;i<M;i++)
+		for(j=0;j<N;j++)
 			data[i][j]=initialValueForArray;
+	/*
+	printf("the  matix is :\n");
+	for(i=0;i<13;i++){
+		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
+	}
+	*/
 	//set files
 	//char * path = "math.txt";
 	//char * testend = "testEnd.txt";
 	// parser original data 
 	getOriginalData(filePath,data);
+
+	printf("the initil matix is :\n");
+	for(i=0;i<13;i++){
+		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
+	}
+
+
 	// get useful data
+
 	realRows = getRowNumber(data);
 	realColumns = getColumnNumber(data);
 	formatData = getReadedData(data);
@@ -202,4 +238,17 @@ void initialization(char * filePath){
 }
 void calculateByType(){
 	printf("%s\n", "here should be some functions here:");
+}
+int getSpaceNumbers(char * line,int len){
+	int index = 0;
+	int count = 0;
+	while(index<len) {
+		if (*(line+index) == ' ')
+		{
+			count++;
+		}
+		index++;
+	}
+
+	return count;
 }
