@@ -11,7 +11,7 @@
 //optimized project
 char buf[1000000];
 double * getArrayFromFile(char *);
-int main(int argc, const char * argv[]) {
+int main2(int argc, const char * argv[]) {
     // insert code here...
     printf("Hello, World!\n");
     //read data module

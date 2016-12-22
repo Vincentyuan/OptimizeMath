@@ -2,58 +2,62 @@
 #include "stdlib.h"
 #include "string.h"
 #include "math.h"
-//support at most for 99 parameters and less than 99 variable
+//support at most for 98 parameters and less than 99 inequality
 int M = 100;
 int N = 100;
+double initialValueForArray = -300.99;// to check the original maxtrix value;
+
 //next three varable should not be changed
 int realRows;// how many rows in the array.
 int realColumns;// how many columns in the array.
 double ** formatData; // the data matrix to be dealwith. with pointer you can refer the r row c columns with *(formatData[r]+s)
 
+//read data from file module 
+void getDataFromFile(char *,double (*)[]);// read data to the arraay
+void saveToArray(char *, double (*)[],int,int);//used to save data called by getOriginaldata.
+int getSpaceNumbers(char *,int);
 
-double initialValueForArray = -300.99;// to check the original maxtrix value;
-void getOriginalData(char *,double (*)[]);// read data to the arraay
-void  saveToArray(char *, double (*)[],int,int);//used to save data called by getOriginaldata.
-void printfAllDataInOriginal(double ** ,int ,int);
-double  ** getReadedData(double(*)[]);
+//initialization module 
+void initialization(char * );
 int getRowNumber(double (*)[]);
 int getColumnNumber(double (*)[]);
-void initialization(char * );
+double  ** getFormatData(double(*)[]);
 
-int getSpaceNumbers(char *,int);
+void printfAllDataInArray(double ** ,int ,int);
+
+// calculate module 
 void calculateByType(char);
+
+
 int main(){
-//get file path from the parameter
-// store the data.
-//initalization  suppos there is no value -300
-//initial arrays
-char * path = "math.txt";
-//char * path = "testEnd.txt";
-initialization(path);
+
+	//initalization arrays, suppose if there is no value then with -300.99
+	//char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/math.txt";
+    char * path = "math.txt";// xcode please with full path
+	initialization(path);
+
+	//output the format data to user
+	printf("\n%s\n","please check your input data here :" );
+	printfAllDataInArray(formatData,realRows,realColumns);
+    
+    //let user to choose operation
+	//read choose from the console;
+	char typeOfOperation;
+	printf("%s\n", "please input 1 for the simplex. 2 for cutting. 3 for binary tree");
+	typeOfOperation = getc(stdin);
 
 
-//let user to choose operation
-
-
-//output the format data
-printf("\n%s\n","please check your input data here :" );
-printfAllDataInOriginal(formatData,realRows,realColumns);
-//read choose from the console;
-char typeOfOperation;
-printf("%s\n", "please input 1 for the simplex. 2 for cutting. 3 for binary tree");
-typeOfOperation = getc(stdin);
-
-
-//calculate the result :
-calculateByType(typeOfOperation);
-//out put here 
-printf("the result is : \n");
-return 0;
+	//calculate the result :
+	calculateByType(typeOfOperation);
+    
+	//output result here or output during the calculate progress
+	printf("the result is : \n");
+	return 0;
 
 }
 
-void  getOriginalData(char* filePath,double (* dataArray)[N]){
-	double *  data[100];
+void  getDataFromFile(char* filePath,double (* dataArray)[N]){
+	//double *  data[100];
 	char * line  = NULL;
 	FILE * fp;
 	size_t len = 0;
@@ -77,10 +81,10 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 	int startIndex = 0;
 	int endIndex = 0;
 	int index = 0;
-	int getNumbers = getSpaceNumbers(charArray,len)+1;// the numbers should be the space in the array plus one;
+	//int getNumbers = getSpaceNumbers(charArray,len)+1;// the numbers should be the space in the array plus one;
 	//printf("the number of the row :%d is %d\n",row,getNumbers );
-	int i =0;
-	int numberParserd = 0;
+	//int i =0;
+	//int numberParserd = 0;
 
 	while(index<len)
 	//while(numberParserd<getNumbers)
@@ -124,57 +128,62 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 	}
    
 }
-void printfAllDataInOriginal(double **afterData ,int row, int column){
-	int i=0,j=0;
-	//int row = getRowNumber(original),column = getColumnNumber(original);
-	for( i=0;i<row;i++){
-		printf("the %dth row :",i);
-		for(j=0;j<column;j++){
-			printf(" %f ",*(afterData[i]+j));//*(afterData[i]+j));				
+//check space number to get the whole value
+int getSpaceNumbers(char * line,int len){
+	int index = 0;
+	int count = 0;
+	while(index<len) {
+		if (*(line+index) == ' ')
+		{
+			count++;
 		}
+		index++;
+	}
+
+	return count;
+}
+//initialize  the two dimension array and the row number and column number
+void initialization(char * filePath){
+
+	double data[M][N]; 
+	int i =0,j=0;
+	for(i=0;i<M;i++)
+		for(j=0;j<N;j++)
+			data[i][j]=initialValueForArray;
+	/*
+     //the default matix
+	printf("the  matix is :\n");
+	for(i=0;i<13;i++){
 		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
 	}
-}
-double ** getReadedData(double (*original) [N]){
+	*/
 	
-	int rowNumber = getRowNumber(original);
-
-	int columnNumber = getColumnNumber(original);
-
-	double ** returnData = malloc((N+M)*sizeof(double));
-	//returnData = nprintf("here");
-
-	int i =0, j=0;
-	double * rows;
-	for( i = 0; i<rowNumber;i++){
-		//double rows[N] ;
-		rows = malloc(N*sizeof(double));
-		//printf("row number  :%d columns number : %d\n",rowNumber,columnNumber);
-		//printf("rows is :%f returnData : %f\n",rows,*(returnData+i) );
-		//printf("\n%s %f \n","hi" ,*(rows+i));
-		*(returnData+i) = rows; //new double [columnNumber];
-
+	getDataFromFile(filePath,data);
+	/*
+     //output inital matix
+	printf("the initil matix is :\n");
+	for(i=0;i<13;i++){
+		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
 	}
-	
-	for (i = 0; i < rowNumber; ++i)
-	{
-		for (j = 0; j < columnNumber; ++j)
-		{	
-			if(*(original[i]+j) == initialValueForArray){
-				returnData[i][j] = 0.0;
-			}else
-				returnData[i][j] = *(original[i]+j);
-		}
-	}
-	return returnData;
+	*/
+
+	// get useful data
+	realRows = getRowNumber(data);
+	realColumns = getColumnNumber(data);
+	formatData = getFormatData(data);
+
 }
+
 int getRowNumber(double (*original)[N]){
 	//get row number
 	int rowNumber = 0;
 	
 	while(*(original[rowNumber]) != initialValueForArray && (*(original[rowNumber])!=0.0)){
 		rowNumber++;
-
 	}
 	/*
 	for (int i = 0; i < N; ++i)
@@ -186,7 +195,6 @@ int getRowNumber(double (*original)[N]){
 	}
 	*/
 
-	
 	return rowNumber;
 }
 int getColumnNumber(double (*original)[N]){
@@ -199,41 +207,45 @@ int getColumnNumber(double (*original)[N]){
 
 	return columnNumber;
 }
-void initialization(char * filePath){
+double ** getFormatData(double (*original) [N]){
+	
+	int rowNumber = getRowNumber(original);
 
-	double data[M][N]; 
-	int i =0,j=0;
-	for(i=0;i<M;i++)
-		for(j=0;j<N;j++)
-			data[i][j]=initialValueForArray;
-	/*
-	printf("the  matix is :\n");
-	for(i=0;i<13;i++){
-		printf("\n");
-	    for(j =0;j<13;j++)
-	        printf(" %f ",data[i][j]);
+	int columnNumber = getColumnNumber(original);
+
+	double ** returnData = malloc((N+M)*sizeof(double));
+	
+    //initial new arrays
+	int i =0, j=0;
+	double * rows;
+	for( i = 0; i<rowNumber;i++){
+		rows = malloc(N*sizeof(double));
+		*(returnData+i) = rows; //new double [columnNumber];
 	}
-	*/
-	//set files
-	//char * path = "math.txt";
-	//char * testend = "testEnd.txt";
-	// parser original data 
-	getOriginalData(filePath,data);
-	/*
-	printf("the initil matix is :\n");
-	for(i=0;i<13;i++){
-		printf("\n");
-	    for(j =0;j<13;j++)
-	        printf(" %f ",data[i][j]);
+	//fulfile the real data
+	for (i = 0; i < rowNumber; ++i)
+	{
+		for (j = 0; j < columnNumber; ++j)
+		{	
+			if(*(original[i]+j) == initialValueForArray){
+				returnData[i][j] = 0.0;
+            }else{
+                returnData[i][j] = *(original[i]+j);
+            }
+		}
 	}
-	*/
-
-	// get useful data
-
-	realRows = getRowNumber(data);
-	realColumns = getColumnNumber(data);
-	formatData = getReadedData(data);
-
+	return returnData;
+}
+//output the two dimension array with the row number and column number
+void printfAllDataInArray(double **afterData ,int row, int column){
+	int i=0,j=0;
+    for( i=0;i<row;i++){
+		printf("the %dth row :",i);
+		for(j=0;j<column;j++){
+			printf(" %f ",*(afterData[i]+j));//*(afterData[i]+j));				
+		}
+		printf("\n");
+	}
 }
 // router for different operation. and the progress can be output into files or just directly out at console
 void calculateByType(char typeOfOperation){
@@ -247,21 +259,12 @@ void calculateByType(char typeOfOperation){
 	}else if(typeOfOperation == '2'){
 		// call function for cuttings
 		printf("%s\n", "you have choose to use cutting");
-	}else{
+	}else if(typeOfOperation == '3'){
 		// call function for binary tree
 		printf("%s\n", "you have choose to use binary");
+	}else if(typeOfOperation == '9'){//9 means finished the operation
+		return ;
+	}else{
+		printf("%s\n","please recheck value you entered" );
 	}
-}
-int getSpaceNumbers(char * line,int len){
-	int index = 0;
-	int count = 0;
-	while(index<len) {
-		if (*(line+index) == ' ')
-		{
-			count++;
-		}
-		index++;
-	}
-
-	return count;
 }
