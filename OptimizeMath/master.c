@@ -108,7 +108,7 @@ void  saveToArray(char * charArray, double (*dataArray)[N],int row,int len){
 				//get each item and then multiply;
 				int length = endIndex - startIndex;
 				double number = 0;//stored a number 
-	//			printf("start index is %d, and the end index is %d the current index is %d\n",startIndex,endIndex,index);
+				//printf("start index is %d, and the end index is %d the current index is %d\n",startIndex,endIndex,index);
 				//printf("start index is %d length is %d\n",startIndex,length );
 				/*
 				while(startIndex<endIndex){
@@ -190,7 +190,7 @@ int getRowNumber(double (*original)[N]){
 	//get row number
 	int rowNumber = 0;
 	
-	while(*(original[rowNumber]) != initialValueForArray && (*(original[rowNumber])!=0.0)){
+	while(*(original[rowNumber]) != initialValueForArray ){ //&& (*(original[rowNumber])!=0.0)){
 		rowNumber++;
 	}
 	/*
@@ -209,7 +209,7 @@ int getColumnNumber(double (*original)[N]){
 	//get max columns number for each row
 	int columnNumber = 0;
 	
-	while(*(original[0]+columnNumber) != initialValueForArray && (*(original[0]+columnNumber)!=0.0)){
+	while(*(original[0]+columnNumber) != initialValueForArray ){//&& (*(original[0]+columnNumber)!=0.0)){
 		columnNumber++;
 	}
 
