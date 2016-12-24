@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "getMinBAIndex:master.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "*(matrix[3]+9)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "solveNormalSimplex:master.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "*(matrix[rows-1]+i)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
