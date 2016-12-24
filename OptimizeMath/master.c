@@ -35,13 +35,16 @@ double ** SimplyToNormalSimplex(double **, int ,int );
 double ** NormalSimplex(double ** , int ,int );
 void solveNormalSimplex(double ** ,int , int );
 
-
+void calculateBA(int ,int ,int ,double  ** );//calculate B/A to find the index to operate
+int getMinBAIndex(double ** , int ,int );// find the min positive value index in B/A;
+void calculateMatrixByOptiParameter(int ,int ,int ,int ,double ** );//based on the calculate calculate matrix;
+void calculateMatrixLineByParameter(double ** ,double ,int ,int ,int );// calculate each line for matrix
 
 int main(){
 
 	//initalization arrays, suppose if there is no value then with -300.99
-	//char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/math.txt";
-    char * path = "math.txt";// xcode please with full path
+	char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/math.txt";
+    //char * path = "math.txt";// xcode please with full path
 	initialization(path);
 
 	//output the format data to user
@@ -59,7 +62,7 @@ int main(){
 	calculateByType(typeOfOperation);
     
 	//output result here or output during the calculate progress
-	printf("the result is : \n");
+	//printf("the result is : \n");
 	return 0;
 
 }
@@ -305,7 +308,7 @@ int getSimplexType(double ** matrix, int row, int columns){
 	int i = 0;
 	for(i = 0;i<row-1;i++){
 		//printf("%f\n",*(matrix[i]+columns-2) );
-		if(*(matrix[i]+columns-1) < 3){//check the result 
+		if(*(matrix[i]+columns-1) <= 3){//check the result 
 			type = 2;
 		}
 	}
@@ -348,11 +351,11 @@ double ** NormalSimplex(double ** matrix, int rows,int columns){
 			//printf("the position is %d and %d %d  , %f\n",i,j,columns-2 +i ,*(SimplexMatrix[i]));
 			*(SimplexMatrix[i]) = (columns-2)+i;//initialize the left columns
 			//printf("the position is %d and %d  columns :%d\n",i,j ,columns-2+j);
-			for(j = 1 ; j<columns-2;j++) {//initiallize the factor of variable
+			for(j = 1 ; j<columns-1;j++) {//initiallize the factor of variable
 				*(SimplexMatrix[i]+j) = *(matrix[i]+j-1);
 			}
 			for(;j<(columns - 2 + rows - 1);j++){//initialzie the slack;
-				if(j == (columns-2+i)){
+				if(j == (columns-1+i)){
 					*(SimplexMatrix[i]+j) = 1 ;
 				}else{
 					*(SimplexMatrix[i]+j) = 0 ;
@@ -369,6 +372,105 @@ double ** NormalSimplex(double ** matrix, int rows,int columns){
 }
 //calculate step by step to get the result
 void solveNormalSimplex(double ** matrix, int rows, int columns){
-	
+	//check the last line to ensure that there doesn't exist one positive value 
+	int i = 1;
+	for(;i<columns-1;i++){
+		if (*(matrix[rows-1]+i) > 0)
+		{//if there exist one positive value , then recalculate the matrix
+			//how to choose?calculate 
+			calculateBA(i,rows,columns,matrix);
+			//printf("\n operation on the rows %d columns is %d %s\n",rows,i,"after calculate BA" );
+			//printfAllDataInArray(matrix,rows,columns);
+			int baseRow = getMinBAIndex(matrix,columns,rows);
+			//printf("%s %d\n","the min BA index is :" , baseRow);
+			calculateMatrixByOptiParameter(rows,columns,baseRow,i,matrix);
+            //printf("%s the step %d\n","after calculate" ,i);
+            //printfAllDataInArray(matrix,rows,columns);
+		}
+	}
+	double result  = -(*(matrix[rows-1] +columns-2));
+	printf("find the opitmized result is : %f", result);
+	printf("%s\n", "the final matrix is ");
+	//printf("%s\n","after calculate" );
+	printfAllDataInArray(matrix,rows,columns);
 }
+void calculateBA(int index,int rows,int columns,double  ** matrix){
+	int i = 0 ;
+	for(i=0;i<rows-1;i++){
+		if(*(matrix[i]+index) == 0.0 || *(matrix[i]+index) < 0){
+			*(matrix[i]+columns-1) = -1.0;
 
+		}else{
+			*(matrix[i]+columns-1) = *(matrix[i]+columns-2) / *(matrix[i]+index);
+		}
+	}
+}
+int getMinBAIndex(double ** matrix, int columns,int rows){
+	int  index = -1, i = 0;
+	for(i = 0; i < rows - 1 ;i++){
+		if( ( *(matrix[i]+columns-1) > 0.0  )){
+			index = i;
+		}
+	}
+	//printf("%s %d\n","current index is :",index );
+	for(i = 0; i < rows - 1 ;i++){
+		//printf("\nthe line %d value is %f the base value is %f  the value of index is %d",i,*(matrix[i]+columns-1),*(matrix[i]+index),index);
+		if ( ( *(matrix[i]+columns-1) > 0.0  ) &&( *(matrix[i]+columns-1) <= *(matrix[index]+columns-1))){
+			index = i;
+		}
+	}
+	return index;
+}
+//calculate the matrix 
+void calculateMatrixByOptiParameter(int rows,int columns,int baseRow,int baseColumn,double ** matrix){
+
+	//update the first columns
+	*(matrix[baseRow]) = baseColumn;
+
+	double factorArray[rows];
+	int i = 0;
+	double factor;
+	factor = 0;
+	for(i = 0 ; i< rows ;i++){
+		//printf(" current rows :%d base rows  :%d  row data is %f \n", i,baseRow,*(matrix[i]+baseColumn));
+		//calculate the factor except base row 
+		//printf("\n%s %d\n","rows number is :",i );
+		factor = 0;
+		if (i!=baseRow){
+			//printf(" current rows :%d base rows  :%d  %f \n", i,baseRow,*(matrix[i]+baseColumn));
+			//calculate the factor 
+			factor = 0;
+			if(*(matrix[baseRow]+baseColumn) == 0.0){
+				factor = 0;
+			}else{
+				//find the factor
+				factor = - (*(matrix[i]+baseColumn))/(*(matrix[baseRow]+baseColumn));
+			}
+			//printf(" the factor is %f",factor);
+			calculateMatrixLineByParameter(matrix,factor,columns,i,baseRow);
+			//calculateMatrixLineByParameter(*(matrix[i]),factor,columns);
+			
+		}
+	}
+	
+	//calculate the factor for the base row;
+	
+	if(*(matrix[baseRow]+baseColumn)  != 1.0 && *(matrix[baseRow]+baseColumn) != 0.0)
+		factor = (1-*(matrix[baseRow]+baseColumn))/(*(matrix[baseRow]+baseColumn));
+	else {
+		factor = 0;
+		//printf(" the factor is %f",factor);
+		calculateMatrixLineByParameter(matrix,factor,columns,i,baseRow);
+			//calculateMatrixLineByParameter(*(matrix[i]),factor,columns);
+	}
+}
+//calculate every line.
+void calculateMatrixLineByParameter(double ** matrix,double factor,int columns,int targetRow,int baseRow){
+	if(factor != 0.0){
+		int i = 1;
+		for(i = 1;i<columns-1;i++){
+			*(matrix[targetRow]+i) +=  factor *(*(matrix[baseRow]+i));
+			//printf("the factor is %f and the result is %f\n",factor,factor*(*(matrix[baseRow]+i)) );
+		}
+	}
+}
