@@ -296,10 +296,12 @@ void calculateSimplex(double ** matrix,int rows, int columns){
 	//printf("hello" );
 	int type = getSimplexType(matrix,rows,columns);
 	double ** simplexMatrix ; 
-	//printf("type of simplex is %d",type );
+	printf("type of simplex is %d \n",type );
 	if(type == 2){
+		printf("%s\n","this is two phases simplex" );
 		simplexMatrix = SimplyToNormalSimplex(matrix, rows, columns);
 	}else{
+		printf("%s\n","this is normal simplex" );
 		simplexMatrix = NormalSimplex(matrix,rows,columns);
 	}
 	
@@ -318,7 +320,7 @@ int getSimplexType(double ** matrix, int row, int columns){
 
 	for(i = 0;i<row-1;i++){
 		//printf("%f\n",*(matrix[i]+columns-2) );
-		if(*(matrix[i]+columns-1) == 5){//check the result only with 3 and 5
+		if(*(matrix[i]+columns-2) == 5){//check the result only with 3 and 5
 			type = 2;
 		}
 	}
@@ -478,8 +480,8 @@ void solveNormalSimplex(double ** matrix, int rows, int columns){
 		}
 	}
 	double result  = -(*(matrix[rows-1] +columns-2));
-	printf("find the opitmized result is : %f", result);
-	printf("%s\n", "the final matrix is ");
+	printf("find the opitmized result is : %f \n\n", result);
+	printf("%s", "the final matrix is ");
 	//printf("%s\n","after calculate" );
 	printfAllDataInArray(matrix,rows,columns);
 }
