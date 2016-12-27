@@ -296,18 +296,24 @@ void calculateSimplex(double ** matrix,int rows, int columns){
 	//printf("hello" );
 	int type = getSimplexType(matrix,rows,columns);
 	double ** simplexMatrix ; 
-	//printf("type of simplex is %d",type );
+	printf("type of simplex is %d \n",type );
 	if(type == 2){
+		printf("%s\n","this is two phases simplex" );
 		simplexMatrix = SimplyToNormalSimplex(matrix, rows, columns);
 	}else{
+		printf("%s\n","this is normal simplex" );
 		simplexMatrix = NormalSimplex(matrix,rows,columns);
 	}
 	
-
-	int NormalSimplexRows = rows;
-	int NormalSimplexColumns = (columns - 2) +(rows - 1) +3;
-	printfAllDataInArray(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
-	solveNormalSimplex(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
+	if(simplexMatrix != NULL){
+		int NormalSimplexRows = rows;
+		int NormalSimplexColumns = (columns - 2) +(rows - 1) +3;
+		printfAllDataInArray(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
+		solveNormalSimplex(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
+	}else{
+		printf("%s\n", "there is no solution for your equations");
+	}
+	
 		
 }
 //type 1 means directly call with the initial matrix.
@@ -318,7 +324,7 @@ int getSimplexType(double ** matrix, int row, int columns){
 
 	for(i = 0;i<row-1;i++){
 		//printf("%f\n",*(matrix[i]+columns-2) );
-		if(*(matrix[i]+columns-1) == 5){//check the result only with 3 and 5
+		if(*(matrix[i]+columns-2) == 5){//check the result only with 3 and 5
 			type = 2;
 		}
 	}
@@ -335,6 +341,10 @@ double **  SimplyToNormalSimplex(double ** matrix, int rows, int columns){
 	return NormalSimplexMatrix;
 }
 double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
+	// there exist some cases :
+	//  <= b1 b1 greater than 0
+	//  >= b2 b2 less than 0 then reverse and add one artificial variable 
+	//  =  b3 add one artificial variable
 	int i = 0, j = 0;
 	int numberAV = getArtificialVariableNumber(matrix, rows, columns);
 	int initialMatrixRows = rows + 1; //add one new row for U
@@ -352,14 +362,20 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 			*(initalMatrixWithArtificialVariable[i]+j) = 0;
 
 	//initialize the matrix;
-	for(i = 0 ; i < rows ; i++){
+	for(i = 0 ; i < rows; i++){
 		
 		// the structure is :
 		// feasiable variable + variable + slack + artificial variable + right + b/a
 
 		//initial the variables matrix  
 		for( j = 1 ; j < columns-2 + 1 ; j++){
-			*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j-1);
+			if( i == rows - 1){
+				*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j);//for target rows
+				*(initalMatrixWithArtificialVariable[i]) = *(matrix[i]);
+			}else{
+				*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j-1);
+			}
+			
 		}
 		//initial the slack for each row;
 		for(; j < columns - 2 + 1 + rows-1 ; j++){
@@ -384,6 +400,7 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 		*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+columns-1);
 
 	}
+	
 	//should initial  the first columns to identify the value;
 
 	printf("\n the initial first step of simplex is :\n");
@@ -402,6 +419,8 @@ int getArtificialVariableNumber(double ** matrix, int rows, int columns){
 	return number;
 }
 double ** solveSimplexPhases1Matrix(){
+
+	//if the result is not valid then return null
 	return NULL;
 }
 double ** formatPhases1Matrix(){
@@ -478,8 +497,8 @@ void solveNormalSimplex(double ** matrix, int rows, int columns){
 		}
 	}
 	double result  = -(*(matrix[rows-1] +columns-2));
-	printf("find the opitmized result is : %f", result);
-	printf("%s\n", "the final matrix is ");
+	printf("find the opitmized result is : %f \n\n", result);
+	printf("%s", "the final matrix is ");
 	//printf("%s\n","after calculate" );
 	printfAllDataInArray(matrix,rows,columns);
 }
