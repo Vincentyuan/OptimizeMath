@@ -350,7 +350,7 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 	int initialMatrixRows = rows + 1; //add one new row for U
 	int initialMatrixColumns = columns - 2 + rows + numberAV + 2;// matrix with artificial variable 
 	//create new matrix
-	printf(" the rows is %d and the columns is %d\n",initialMatrixRows,initialMatrixColumns );
+	//printf(" the rows is %d and the columns is %d\n",initialMatrixRows,initialMatrixColumns );
 	double ** initalMatrixWithArtificialVariable = malloc((initialMatrixRows+initialMatrixColumns)*sizeof(double));
 	double * rowData ;
 	for( i = 0; i<initialMatrixRows;i++){
@@ -403,7 +403,7 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 	
 	//should initial  the first columns to identify the value;
 
-	printf("\n the initial first step of simplex is :\n");
+	printf("\nthe initial first step of simplex is :\n");
 	printfAllDataInArray(initalMatrixWithArtificialVariable, initialMatrixRows,initialMatrixColumns);
 	//sovle the artificial variable matrix with the rows number and the columns number 
 
