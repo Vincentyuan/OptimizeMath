@@ -35,6 +35,7 @@ int getSimplexType(double **, int ,int );
 double ** SimplyToNormalSimplex(double **, int ,int );
 double ** initialSimplexPhases1Matrix(double ** ,int ,int );
 int getArtificialVariableNumber(double ** , int , int );
+double * getBaseVariable(double ** , int , int );
 double ** solveSimplexPhases1Matrix();
 double ** formatPhases1Matrix();
 	//normal simplex
@@ -332,13 +333,28 @@ int getSimplexType(double ** matrix, int row, int columns){
 }
 //phase 1 reduce to normal simplex.
 double **  SimplyToNormalSimplex(double ** matrix, int rows, int columns){
+	
+	int numberAV =  getArtificialVariableNumber(matrix,rows,columns);
+	int initialMatrixRows = rows + 1; //add one new row for U
+	int initialMatrixColumns = columns - 2 + rows + numberAV + 2;// columns 
+
 	//initial phase1 matrix
 	double ** simplexPhase1Matrix = initialSimplexPhases1Matrix(matrix,rows,columns);
+	//printfAllDataInArray(simplexPhase1Matrix,initialMatrixRows, initialMatrixColumns);
 	//solve phase 1 matrix 
-	double ** solvedPhases1Matrx = solveSimplexPhases1Matrix();
+	//printf("%s\n","adafds" );
+	double ** solvedPhases1Matrx = solveSimplexPhases1Matrix(simplexPhase1Matrix,initialMatrixRows, initialMatrixColumns,numberAV);
+	//printf("dafsafgs");
 	//format phase 1 matrix 
-	double ** NormalSimplexMatrix = formatPhases1Matrix();
-	return NormalSimplexMatrix;
+	if(solvedPhases1Matrx != NULL){
+		double ** NormalSimplexMatrix = formatPhases1Matrix(solvedPhases1Matrx, initialMatrixRows,initialMatrixColumns,numberAV);
+		printf("after NormalSimplexMatrix");
+		printfAllDataInArray(NormalSimplexMatrix,initialMatrixRows-1, initialMatrixColumns-numberAV);
+		return NormalSimplexMatrix;
+	}else{
+		return NULL;
+	}
+	
 }
 double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 	// there exist some cases :
@@ -401,7 +417,11 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 
 	}
 	
-	//should initial  the first columns to identify the value;
+	//should initial  the first columns to identify base;
+	//? how to define the base variable? current take the last row - 1
+	for(i = 0 ; i < initialMatrixRows-2;i++){
+		*(initalMatrixWithArtificialVariable[i]) = initialMatrixColumns-2-numberAV - 1+i; 
+	}
 
 	printf("\nthe initial first step of simplex is :\n");
 	printfAllDataInArray(initalMatrixWithArtificialVariable, initialMatrixRows,initialMatrixColumns);
@@ -409,6 +429,7 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 
 	return initalMatrixWithArtificialVariable;
 }
+// get artificial variable number from initial matrix
 int getArtificialVariableNumber(double ** matrix, int rows, int columns){
 	int i = 0 , number = 0;
 	for(i = 0 ;i<rows-1;i++){
@@ -418,13 +439,100 @@ int getArtificialVariableNumber(double ** matrix, int rows, int columns){
 	}
 	return number;
 }
-double ** solveSimplexPhases1Matrix(){
-
+//target all weight of non-base variables are negative or null in last line 
+double ** solveSimplexPhases1Matrix(double ** matrix, int rows, int columns, int numberAV){
+	//printf("the rows is %d, the columns is %d",rows,columns);
+	//printf("dafsafgs");
+	//solve matrix with simplex 
+	//solveFirstStepSimplexMatrix(matrix, rows, columns,numberAV);
 	//if the result is not valid then return null
-	return NULL;
+
+	double  * baseVariable= getBaseVariable(matrix,rows,columns);
+	//printf("%s\n","after" );
+	//express U using non-base variable 
+	int i = 0 , j = 0;
+	//loop all the artificial variable , so that all the result of U is express by non-base variable 
+	int StartIndexOfAV = columns - 2 - numberAV;
+	int endIndexOfAV = columns - 2;
+	for( i = StartIndexOfAV ; i < endIndexOfAV ; i++){
+		int nonZeroRow = -1;
+		for(j = 0; j< rows - 1 ; j++){
+			if(*(matrix[j]+i) == 1.0){
+				nonZeroRow = j;
+			}
+		}
+		for(j = 1 ; j < columns - 1; j++){
+			*(matrix[rows - 1]+j) += *(matrix[nonZeroRow]+j);
+		}
+	}
+	//printf("%s\n","after add the variable" );
+	//printfAllDataInArray(matrix,rows,columns);
+
+	// all weight of non-base variables are negative or null in U.solve this with simplex
+	 for( i = 0 ;i<columns-1;i++){
+		if ((i < endIndexOfAV)&&(*(matrix[rows-1]+i) > 0))
+		{//if there exist one positive value , then recalculate the matrix
+			//how to choose?calculate 
+			calculateBA(i,rows,columns,matrix);
+			//printf("\n operation on the rows %d columns is %d %s\n",rows,i,"after calculate BA" );
+			//printfAllDataInArray(matrix,rows,columns);
+			int baseRow = getMinBAIndex(matrix,columns,rows);
+			//printf("%s %d\n","the min BA index is :" , baseRow);
+			calculateMatrixByOptiParameter(rows,columns,baseRow,i,matrix);
+            //printf("%s the step %d\n","after calculate" ,i);
+            //printfAllDataInArray(matrix,rows,columns);
+		}
+	}
+	//??how to change base and determine that the result can't be reached 
+	printf("after sovlved");
+    printfAllDataInArray(matrix,rows,columns);
+	return matrix;
 }
-double ** formatPhases1Matrix(){
-	return NULL;
+// get base variable array from the matrix
+double * getBaseVariable(double ** matrix, int rows, int columns){
+	double * baseVariable = malloc((rows - 2) * sizeof(double));
+	int i = 0 ;
+	//printf("the number of the array is  %d\n",rows - 2 );
+	for(i = 0; i< rows - 1 ; i++){
+		*(baseVariable+i) = *(matrix[i]);
+		//printf(" the base variable is %f the row is %d\n",*(matrix[i]),i );
+
+	}
+
+	return baseVariable;
+}
+
+double ** formatPhases1Matrix(double ** matrix, int rows, int columns , int numberAV){
+	if(matrix != NULL){
+		double ** matrixWithoutAV = malloc((rows - 1 + columns - 1)*(sizeof(double)));
+		double * rowData ;
+		int i = 0 , j = 0; 
+
+		for( i = 0; i<rows;i++){
+			rowData = malloc(columns*sizeof(double));
+			*(matrixWithoutAV+i) = rowData; //new double [columnNumber];
+		}
+		for(i = 0;i<rows;i++)
+			for(j=0;j<columns;j++)
+				*(matrixWithoutAV[i]+j) = 0;
+		
+		for( i =0; i < rows - 1 ; i++){
+			for(j = 0 ; j< columns ; j++){
+				if(j<columns - 2 - numberAV){
+					*(matrixWithoutAV[i] +j ) = *(matrix[i]+j);
+				}else if( j >=  columns - 2 ){
+					*(matrixWithoutAV[i] +j - numberAV ) = *(matrix[i]+j);
+				}else{
+					// do nothing 
+				}
+			}
+		}
+
+		return matrixWithoutAV ;
+	}else{
+		return NULL;
+	}
+
 }
 
 //phase 2 . all the inequallent is less than 
