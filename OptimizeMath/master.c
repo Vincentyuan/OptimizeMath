@@ -47,6 +47,16 @@ int getMinBAIndex(double ** , int ,int );// find the min positive value index in
 void calculateMatrixByOptiParameter(int ,int ,int ,int ,double ** );//based on the calculate calculate matrix;
 void calculateMatrixLineByParameter(double ** ,double ,int ,int ,int );// calculate each line for matrix
 
+//node for binary tree
+struct node
+{
+	int valueArray[100];// the max length of the variable should be less than 99
+	int numberOfVariable;
+	int deep;
+	node * left;
+	node * right;
+};
+
 int main(){
 
 	//initalization arrays, suppose if there is no value then with -300.99
@@ -64,7 +74,7 @@ int main(){
 	char typeOfOperation;
 	printf("%s\n", "please input 1 for the simplex. 2 for cutting. 3 for binary tree");
 	//typeOfOperation = getc(stdin);
-	typeOfOperation = '1';
+	typeOfOperation = '3';
 
 	//calculate the result :
 	calculateByType(typeOfOperation);
@@ -285,6 +295,7 @@ void calculateByType(char typeOfOperation){
 	}else if(typeOfOperation == '3'){
 		// call function for binary tree
 		printf("%s\n", "you have choose to use binary");
+		calculateBinary(formatData,realRows,realColumns);
 	}else if(typeOfOperation == '9'){//9 means finished the operation
 		return ;
 	}else{
@@ -689,4 +700,11 @@ void calculateMatrixLineByParameter(double ** matrix,double factor,int columns,i
 			//printf("the factor is %f and the result is %f\n",factor,factor*(*(matrix[baseRow]+i)) );
 		}
 	}
+}
+
+void calculateBinary(double ** matrix, int rows, int columns){
+	int numberOfVariable = columns - 2;
+	//construct the binary tree
+	struct node root;
+
 }
