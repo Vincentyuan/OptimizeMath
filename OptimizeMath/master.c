@@ -47,15 +47,18 @@ int getMinBAIndex(double ** , int ,int );// find the min positive value index in
 void calculateMatrixByOptiParameter(int ,int ,int ,int ,double ** );//based on the calculate calculate matrix;
 void calculateMatrixLineByParameter(double ** ,double ,int ,int ,int );// calculate each line for matrix
 
+//for binary solution
 //node for binary tree
 struct node
 {
 	int valueArray[100];// the max length of the variable should be less than 99
 	int numberOfVariable;
 	int deep;
-	node * left;
-	node * right;
+	struct node * left;
+	struct node * right;
 };
+void calculateBinary(double ** , int , int );
+
 
 int main(){
 
