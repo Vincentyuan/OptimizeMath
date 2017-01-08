@@ -2,6 +2,8 @@
 #include "stdlib.h"
 #include "string.h"
 #include "math.h"
+#include "stdbool.h"
+
 //support at most for 98 parameters and less than 99 inequality
 int M = 100;
 int N = 100;
@@ -48,6 +50,8 @@ void calculateMatrixByOptiParameter(int ,int ,int ,int ,double ** );//based on t
 void calculateMatrixLineByParameter(double ** ,double ,int ,int ,int );// calculate each line for matrix
 
 //for binary solution
+
+
 
 double varibale[99][98][2] = {0};
 void fff(int x);
@@ -714,315 +718,249 @@ void calculateMatrixLineByParameter(double ** matrix,double factor,int columns,i
 
 
 
-// binary tree
-
-/*
-typedef struct Tree{
-    int deep; //deep
-    double v0;
-    double v1;
-    struct Tree *left;
-    struct Tree *right;
-    
-    
-}Tree;
+//----------------------------------- binary tree ------------------------------------------------------------------
 
 
-void CreatTree(Tree * T){
-    int ch;
+typedef struct BTnode{
+    short *solution;
+    double z;
+    double *thita;
+    int solutionN;
+    int constrainN;
+    struct BTnode *childs[2];
+    bool feasible;
+    bool final;
+    struct BTnode *parent;
+    struct BTnode *brother;
     
-    scanf("%d",&ch);
-    if (ch == ' ') {
-        T = NULL;
+    void (*ConstructBTnode)(struct BTnode*,double *,double **,int,int);
+    void (*SetNode_1)(struct BTnode*,double *,double **);
+    void (*SetNode_2)(struct BTnode*,short ,double *,double **,struct BTnode *);
+
+    
+}BTnode;
+
+void constructBTnode(BTnode* node,double *zc,double **constrains,int n,int cn){
+    node->childs[0]=NULL;
+    node->childs[1]=NULL;
+    node->brother=NULL;
+    node->parent=NULL;
+    node->feasible=true;
+    node->final=false;
+    node->solutionN=n;
+    node->constrainN=cn;
+    node->solution = malloc(sizeof(short[n]));
+    for(int i=0;i<n;i++){
+        node->solution[i]=-1;
+    }
+    node->z=0.0;
+    node->thita=malloc(sizeof(double[node->constrainN]));
+    
+}
+
+void setNode_1(BTnode* node,double *zc,double **constrains){
+    //initialize z
+    for(int i=0;i<node->solutionN;i++){
+        if(zc[i]>=0) node->z+=zc[i];
+    }
+    //initialize thita
+    for(int i=0;i<node->constrainN;i++){
+        node->thita[i]=constrains[i][node->solutionN];
+        for(int j=0;j<node->solutionN+1;j++){
+            if(constrains[i][j]<0){
+                node->thita[i]-=constrains[i][j];
+            }
+        }
+    }
+}
+
+void setNode_2(BTnode* node,short x,double *zc,double **constrains,BTnode *parent){
+    node->z=parent->z;
+    for(int i=0;i<node->constrainN;i++){
+        node->thita[i]=parent->thita[i];
+    }
+    bool set=false;
+    int step = 0;
+    for(int i=0;i<node->solutionN;i++){
+        //give value to solution
+        if(parent->solution[i]!=-1) node->solution[i]=parent->solution[i];
+        if(node->solution[i]==-1&& !set){
+            node->solution[i]=x;
+            set = true;
+            step=i;
+            if(i==node->solutionN-1) node->final=true;
+        }
+    }
+    //set thita and z
+    if(x==0){
+        if(zc[step]>=0){
+            node->z-=zc[step];
+        }
+        for(int i=0;i<node->constrainN;i++){
+            if(constrains[i][step]<=0){
+                node->thita[i]+=constrains[i][step];
+                if(node->thita[i]<0) node->feasible=false;
+            }
+        }
     }
     else{
-    T = (Tree *)malloc(sizeof(Tree));
-        T->deep = 0;
-        T->v0 = varibale0[0][0];
-        T->v1 = varibale1[0][0];
-        CreatTree(T->left);
-        CreatTree(T->right);
+        if(zc[step]<0){
+            node->z+=zc[step];
+        }
+        for(int i=0;i<node->constrainN;i++){
+            if(constrains[i][step]>0){
+                node->thita[i]-=constrains[i][step];
+                if(node->thita[i]<0) node->feasible=false;
+            }
+        }
     }
-
 }
 
-void PreOrder(Tree *T){
-    if(T){
-        PreOrder(T->left);
-        PreOrder(T->right);
+
+
+typedef struct Btree{
+    double *zc;//the coefficient of function Z
+    double **constrains;// the constrains Inequality
+    int n; // the amount of variables
+    int cn; // the amount of constrains
+    bool getMax;
     
+    BTnode *optimize;
+    BTnode root;
+    
+    void (*ConstructBtree)(struct Btree *,double *,double **,int,int);
+    void (*GenerateNode)(struct Btree *,BTnode *);
+    
+    
+}Btree;
+
+
+
+
+void generateNode(Btree * tree,BTnode *root);
+
+
+void constructBtree(Btree * tree, double *zzc,double **cconstrains,int nn,int ccn){
+    tree->zc=zzc;
+    tree->n=nn;
+    tree->cn=ccn;
+    tree->getMax=false;
+    tree->constrains=cconstrains;
+    tree->root.ConstructBTnode(&tree->root,tree->zc,tree->constrains,tree->n,tree->cn);
+    tree->root.SetNode_1(&tree->root,tree->zc,tree->constrains);
+    BTnode *troot=&tree->root;
+    generateNode(tree,troot);
+}
+
+
+void generateNode(Btree * tree,BTnode *root){
+    if(tree->getMax) return;
+    bool final=root->final;
+    bool feasible=root->feasible;
+    
+    if(feasible && !final){
+        BTnode *child0;
+        child0->ConstructBTnode(child0, tree->zc,tree->constrains,tree->n,tree->cn );//括号里第一个参数? 不确定
+        child0->SetNode_2(child0,0,tree->zc,tree->constrains,root);//括号里第一个参数? 不确定
+        child0->parent=root;
+        root->childs[0]=child0;
+        BTnode *child1;
+        child1->ConstructBTnode(child1,tree->zc,tree->constrains,tree->n,tree->cn);
+        child1->SetNode_2(child1,1,tree->zc,tree->constrains,root);
+        child1->parent=root;
+        root->childs[1]=child0;
+        child0->brother=child1;
+        child1->brother=child0;
+        if(child0->z>child1->z){
+            generateNode(tree,child0);
+        }
+        generateNode(tree,child1);
+    }
+    if(final){
+        if(feasible){
+            tree->optimize=root;
+            if((root->z < root->brother->z)&& root->brother->feasible) tree->optimize=root->brother;
+        }
+        else{
+            if(root->brother->feasible)
+                tree->optimize=root->brother;
+            else return;
+        }
+        BTnode *p = tree->optimize->parent->brother;
+        for(int i=0 ;i<tree->n-1;i++){
+            if(tree->optimize->z < p->z) return;
+            p=p->parent->brother;
+        }
+        tree->getMax=true;
+        printf("the maximum Z is %f", tree->optimize->z);
+        //cout<<"the maximum z is "<<optimize->z;
+        
     }
     
 }
 
- */
 
 
+void binaryVariable(double *zc,double **constrains,int n,int cn){
+    Btree BTREE;
+    BTREE.ConstructBtree = constructBtree;
+    BTREE.GenerateNode = generateNode;
+    BTREE.ConstructBtree(&BTREE,zc,constrains,n,cn);
+    
+    
+    BTnode ROOT;
+    ROOT.ConstructBTnode = constructBTnode;
+    ROOT.SetNode_1 = setNode_1;
+    ROOT.SetNode_2 = setNode_2;
+    ROOT.ConstructBTnode(&ROOT,zc,constrains,n,cn);
+    
+    BTnode *R= &ROOT;
+    
+    BTREE.GenerateNode(&BTREE,R);
+    
+}
 
-double a[2<<98];
 
-//double getS(int s){
-//    return varibale[N][M];
-//}
-
-
-
-//calculateBinary(formatData,realRows,realColumns)
 
 
 void calculateBinary(double ** matrix, int rows, int columns){
-	int numberOfVariable = columns - 2;
-    int numberOfInequality = rows - 1;
     
-
+	int numberVariable = columns - 2;
+    int numberInequality = rows - 1;
     
-    printfAllDataInArray(matrix, rows, columns);
- 
     printf("colums = %d rows = %d\n",columns,rows);
-    printf("numberOfVariable = %d numberOfInequality = %d\n",numberOfVariable,numberOfInequality);
+    printf("numberOfVariable = %d numberOfInequality = %d\n",numberVariable,numberInequality);
     
     
-    int r,n = 0;
-    int condition;
-    //stock values : parameters multiply by (variable = 0 or 1);
-
-    //get all of values possible
-    //对于限制条件求值
-    /*
-    for (r = 0; r < numberOfInequality; r++) {
-        for (n = 0; n < numberOfVariable; n++) {
-            varibale[r][n][0] = 0 * matrix[r][n];
-            varibale[r][n][1] = 1 * matrix[r][n];
-            printf("%f \n",matrix[r][n]);
-            printf("%f  %f \n",varibale[r][n][0],varibale[r][n][1]);
+    int n; // the amount of variables
+    int cn; // the amount of constrains
+    double *zc; //the coefficient of function Z
+    double **constrains; // the constrains Inequality
+    zc = malloc(sizeof(double[n]));
+    constrains = malloc(sizeof(double*[cn]));
+    
+    
+    n = columns - 2;
+    cn = rows - 1;
+    
+    
+    int i,j;
+    for (i=1; i<=n; i++) {
+        zc[i-1] = matrix[cn][i];
+    }
+    
+    for(i=0;i<cn;i++){
+        constrains[i]=malloc(sizeof(double[n+1]));
+        for(j=0;j<n;j++){
+            constrains[i][j] = matrix[i][j];
         }
-    }
+        
+        constrains[i][n] = matrix[i][n];
     
-    for (r = 0; r < numberOfInequality; r++) {
-        for (n = numberOfVariable; n < columns; n++) {
-            varibale[r][n][0] = 0 ;
-            varibale[r][n][1] = 0 ;
-            printf("多余的值\n");
-            printf("%f \n",matrix[r][n]);
-            printf("%f  %f \n",varibale[r][n][0],varibale[r][n][1]);
-        }
-    }
-    */
-    
-    //对最后一行Max求值
-    r = numberOfInequality;
-    condition = matrix[r][0];
-    
-        for (n = 0; n <= numberOfVariable; n++) {
-            varibale[r][n][0] = 0 * matrix[r][n+1]; //第一列是符号，所以要n+1
-            varibale[r][n][1] = 1 * matrix[r][n+1];
-            printf("%f \n",matrix[r][n]);
-            printf("%f  %f \n",varibale[r][n][0],varibale[r][n][1]);
-        }
-    for (n = numberOfVariable+1; n < columns; n++) {
-        varibale[r][n][0] = 0 ;
-        varibale[r][n][1] = 0 ;
-        printf("多余的值\n");
-        printf("%f \n",matrix[r][n]);
-        printf("%f  %f \n",varibale[r][n][0],varibale[r][n][1]);
     }
     
     
-    
-    
-    
-    int i = 0,j,m=0,s,v;
-    int x[11]={0};
-    double sum[2<<10][11] = {0};
-    int var[2<<10][10] = {0};
-   
-
-
-//for (x[m]=0; x[m]<=1; x[m]++,m++) {
-//    
-//    if (m == 2) {
-//        i=pow(2, m);
-//        sum[i] = varibale[0][0][x[0]] + varibale[0][1][x[1]];;
-//    }
-//    for (x[m]=0; x[m]<=1; x[m]++,m++) {
-//        if (m==2) {
-//            i=pow(2, m);
-//            sum[i] = varibale[0][0][x[0]] + varibale[0][1][x[1]];
-//        }
-//
-//        
-//
-//        }
-//    }
-    
-//以下两层运行正常
-  
-//    for (x[0]=0; x[0]<=1; x[0]++) {
-//        
-
-//        for (x[1]=0; x[1]<=1; x[1]++,i++) {
-//            sum[i] = varibale[0][0][x[0]] + varibale[0][1][x[1]];
-//            
-//            
-//        }
-//    }
-//    
-    
-    
-
-    for (i=0; i<10; i++) {
-        for (j=0; j<2; j++) {
-            printf("varibale[%d][%d][%d] =  %f\n",r,i,j,varibale[r][i][j]);
-        }
-    }
-    
-
-
- 
-// sum of each line equality
-//多层求和有问题
-    i=0;
-    for (x[0]=0; x[0]<=1; x[0]++) {
-        for (x[1]=0; x[1]<=1; x[1]++) {
-            for (x[2]=0; x[2]<=1; x[2]++) {
-                for (x[3]=0; x[3]<=1; x[3]++) {
-                    for (x[4]=0; x[4]<=1; x[4]++) {
-                        for (x[5]=0; x[5]<=1; x[5]++) {
-                            for (x[6]=0; x[6]<=1; x[6]++) {
-                                for (x[7]=0; x[7]<=1; x[7]++) {
-                                    for (x[8]=0; x[8]<=1; x[8]++) {
-                                        for (x[9]=0; x[9]<=1; x[9]++,i++) {
-                                            sum[i][0] = varibale[r][0][x[0]] + varibale[r][1][x[1]] + varibale[r][2][x[2]]+ varibale[r][3][x[3]] + varibale[r][4][x[4]] + varibale[r][5][x[5]] + varibale[r][6][x[6]] + varibale[r][7][x[7]] + varibale[r][8][x[8]] + varibale[r][9][x[9]] ;
-                                            for (v=1; v<11; v++) {
-                                                sum[i][v] = x[v];
-                                                printf("sum[%d][x%d] = %f, ",i,v,sum[i][v]);
-                                            }
-                                            printf("\n");
-                                            
-                                            
-//                                            printf("x[1]= %d, x[2]=%d ,x[3]= %d, x[4]= %d ,x[5]= %d ,x[6]= %d ,x[7]= %d ,x[8]= %d ,x[9]= %d\n",x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
-//                                            printf("varibale[0][0][%d]= %f, varibale[0][1][%d]= %f, varibale[0][2][%d]=%f, varibale[0][3][%d]= %f, varibale[0][4][%d]= %f, varibale[0][5][%d]= %f, varibale[0][6][%d]= %f, varibale[0][7][%d]= %f, varibale[0][8][%d]= %f, varibale[0][9][%d]= %f\n",x[0],varibale[r][0][x[0]],x[1],varibale[r][1][x[1]],x[2],varibale[r][2][x[2]],x[3],varibale[r][3][x[3]],x[4],varibale[r][4][x[4]],x[5],varibale[r][5][x[5]],x[6],varibale[r][6][x[6]],x[7],varibale[r][7][x[7]],x[8],varibale[r][8][x[8]],x[9],varibale[r][9][x[9]]);
-//                                            printf("sum[%d] = %f\n\n",i,sum[i]);
-                                            
-                                            
-                                        }
-                                        
-                                    }
-                                    
-                                }
-                                
-                            }
-                            
-                        }
-                        
-                    }
-                    
-                }
-                
-            }
-            
-        }
-    }
-    
-//    for(j=0; j<numberOfVariable; j++){
-//        
-//        sum[i] = sum[i] + varibale[0][j][x[j]];
-//        
-//    }
-    
-    
-//                                        sum[i] = varibale[0][0][x[0]] + varibale[0][1][x[1]] + varibale[0][2][x[2]]+ varibale[0][3][x[3]] + varibale[0][4][x[4]] + varibale[0][5][x[5]] + varibale[0][6][x[6]] + varibale[0][7][x[7]] + varibale[0][8][x[8]] + varibale[0][9][x[9]] ;
-    
-   
-//     sum[i] = varibale[0][0][x1] + varibale[0][0][x2] + varibale[0][0][x3]+ varibale[0][0][x4] + varibale[0][0][x5] + varibale[0][0][x6] + varibale[0][0][x7] + varibale[0][0][x8] + varibale[0][0][x9] + varibale[0][0][x10] ;
-    
-    
-    
-    //print the result
-    int  numberOfSum = (2<<numberOfVariable);
-    int pp;
-    int k=0,k1=0;
-    int temp[11];
-    
-    pp = pow(2,10-numberOfVariable);
-    
-    //Max[0] ＝ sum，Max[1 to 9] = x1,x2,x3 ...x10;
-    double Max[11],Min[11];
-    Max[0]=sum[0][0];
-    Min[0]=sum[0][0];
-    
-    //double result[2<<10] = {0};
-    
-    
-    //从2^10个结果中选出需要的
-    for (k=0; k <numberOfSum; k++,k1++) {
-        //result[k1] = sum[k*pp][0];
-        printf("%f\n",sum[k*pp][0]);
-    }
-    
-    
-    // sort the value of Sum
-    for (i=0; i<(2<<9); i++) {
-        for (j=i+1; j<(2<<9); j++) {
-            if(sum[i][0] < sum[j][0]){
-                for (k=0; k<11; k++) {
-                    temp[k] = sum[i][k];
-                    sum[i][k] = sum[j][k];
-                    sum[j][k] = temp[k];
-                }
-                
-                
-            }
-        }
-    }
-    
-    //print
-   // printf("%d",(2<<9));
-    for (i=0; i<(2<<9); i++) {
-        for (j=0; j<=numberOfVariable; j++) {
-            
-            printf("sum[%d][x%d] = %f, ",i,j,sum[i][j]);
-        }
-        printf("\n");
-    }
-    
-    
-    
-    //get the Max and parameters
-//    Max[0] = sum[0][0];
-//    for (k=1; k<11; k++) {
-//        Min[k] = sum[0][k];
-//    }
- 
-    
-    //        if (Max[0] < sum[i][0]) {
-    //            Max[0] = sum[i][0];
-                for (k=0; k<11; k++) {
-                    Max[k] = sum[0][k];
-                }
-    
-//        if (Min[0] > sum[i][0]) {
-//            Min[0] = sum[i][0];
-//            for (k=1; k<11; k++) {
-//                Min[k] = sum[i][k];
-//            }
-//        }
-//    }
-    
-    printf("Max = %f\n",Max[0] );
-    for (i=1; i<=numberOfVariable; i++) {
-        printf("x%d=%f, ",i,Max[i]);
-    }
-    printf("\n");
-    
-    
-    //calculate
-    //getVaribale_01(varibale0);
-
-
-
-
-
+    binaryVariable(zc,constrains,n,cn);
     
 
 }
