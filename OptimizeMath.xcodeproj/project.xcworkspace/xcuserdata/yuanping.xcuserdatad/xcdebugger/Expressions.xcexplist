@@ -3,6 +3,9 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "findOptimizedNodeFromTree:master.c">
+      </ContextState>
+      <ContextState
          contextName = "getMinBAIndex:master.c">
          <PersistentStrings>
             <PersistentString

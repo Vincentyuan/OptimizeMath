@@ -1,7 +1,8 @@
 #include  "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "math.h"
+//#include "math.h"
+typedef enum { false, true } bool;//define the bool type variable 
 //support at most for 98 parameters and less than 99 inequality
 int M = 100;
 int N = 100;
@@ -23,23 +24,23 @@ int getRowNumber(double (*)[]);
 int getColumnNumber(double (*)[]);
 double  ** getFormatData(double(*)[]);
 
-void printfAllDataInArray(double ** ,int ,int);
 
-// calculate module 
+
+// calculate router 
 void calculateByType(char);
 
-//simplex module;
+//1 simplex module;
 void calculateSimplex(double ** ,int ,int );
 int getSimplexType(double **, int ,int ); 
 	//simplex phases 1
-double ** SimplyToNormalSimplex(double **, int ,int );
+double ** SimplyToNormalSimplexMatrix(double **, int ,int );
 double ** initialSimplexPhases1Matrix(double ** ,int ,int );
 int getArtificialVariableNumber(double ** , int , int );
 double * getBaseVariable(double ** , int , int );
 double ** solveSimplexPhases1Matrix();
 double ** formatPhases1Matrix();
 	//normal simplex
-double ** NormalSimplex(double ** , int ,int );
+double ** NormalizeSimplexMatrix(double ** , int ,int );
 void solveNormalSimplex(double ** ,int , int );
 	//functions to solve normal simplex
 void calculateBA(int ,int ,int ,double  ** );//calculate B/A to find the index to operate
@@ -47,24 +48,51 @@ int getMinBAIndex(double ** , int ,int );// find the min positive value index in
 void calculateMatrixByOptiParameter(int ,int ,int ,int ,double ** );//based on the calculate calculate matrix;
 void calculateMatrixLineByParameter(double ** ,double ,int ,int ,int );// calculate each line for matrix
 
-//for binary solution
+//2 cutting and spliting 
+
+
+// 3 olve binary tree
+void calculateBinary(double ** , int , int );
+struct node * constructBinaryTrees(int ,int ,int * );
+struct node * constructOneNodeWithParameters(int  ,int  , int ,int * ,int );//create tree node 
+void tuningDecisionArray(int * ,int ,int , int );
+void solveTheBinaryTree(struct node *  ,int, double ** , int , int );
+void calculateForEachNode(struct node * ,struct node * ,int,double ** , int , int );
+double calculateZValueByDecision(int * ,int,double ** , int , int );
+double * calculateThetaValueByDecision(int * ,int,int , double ** , int , int );
+void findOptimizedNodeFromTree(struct node *,struct node * ,struct node * );
+bool checkFeasible(struct node *  );
+
+// tool functions 
+void ArrayPointerCopy(int * , int * ,int);// array pointer copy used at binary tree
+void printfAllDataInArray(double ** ,int ,int);
+//void printfBinaryTree(struct node * );
+void printfIntArray(int *,int );
+void printfDoubleArray(double *,int);
+void printfBinaryNode(struct node *);
+void printfBinaryTree(struct node *);
+
+
 //node for binary tree
 struct node
 {
-	int valueArray[100];// the max length of the variable should be less than 99
-	int numberOfVariable;
+	int * decisionArray;// the array than contains the choice of decision
+	int numberOfVariable;//should equal to  deepth because the deep of root is 0 and it's leat node means the first variable equal to 0 and so on
 	int deep;
+	double z;
+	double  * theta;// how many inequations.
+	int numberOfInequations;
 	struct node * left;
 	struct node * right;
 };
-void calculateBinary(double ** , int , int );
-
 
 int main(){
 
 	//initalization arrays, suppose if there is no value then with -300.99
-	//char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/math.txt";
-    char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/simplex2.txt";
+	char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/math.txt";
+
+	//here 
+    //char * path = "/Users/yuanping/Documents/code/xcode/OptimizeMath/OptimizeMath/binary.txt";
     //char * path = "math.txt";// xcode please with full path
 	initialization(path);
 
@@ -77,7 +105,7 @@ int main(){
 	char typeOfOperation;
 	printf("%s\n", "please input 1 for the simplex. 2 for cutting. 3 for binary tree");
 	//typeOfOperation = getc(stdin);
-	typeOfOperation = '3';
+	typeOfOperation = '1';
 
 	//calculate the result :
 	calculateByType(typeOfOperation);
@@ -87,7 +115,40 @@ int main(){
 	return 0;
 
 }
+void initialization(char * filePath){
 
+	double data[M][N]; 
+	int i =0,j=0;
+	for(i=0;i<M;i++)
+		for(j=0;j<N;j++)
+			data[i][j]=initialValueForArray;
+	/*
+     //the default matix
+	printf("the  matix is :\n");
+	for(i=0;i<13;i++){
+		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
+	}
+	*/
+	
+	getDataFromFile(filePath,data);
+	/*
+     //output inital matix
+	printf("the initil matix is :\n");
+	for(i=0;i<13;i++){
+		printf("\n");
+	    for(j =0;j<13;j++)
+	        printf(" %f ",data[i][j]);
+	}
+	*/
+
+	// get useful data
+	realRows = getRowNumber(data);
+	realColumns = getColumnNumber(data);
+	formatData = getFormatData(data);
+
+}
 void  getDataFromFile(char* filePath,double (* dataArray)[N]){
 	//double *  data[100];
 	char * line  = NULL;
@@ -175,40 +236,7 @@ int getSpaceNumbers(char * line,int len){
 	return count;
 }
 //initialize  the two dimension array and the row number and column number
-void initialization(char * filePath){
 
-	double data[M][N]; 
-	int i =0,j=0;
-	for(i=0;i<M;i++)
-		for(j=0;j<N;j++)
-			data[i][j]=initialValueForArray;
-	/*
-     //the default matix
-	printf("the  matix is :\n");
-	for(i=0;i<13;i++){
-		printf("\n");
-	    for(j =0;j<13;j++)
-	        printf(" %f ",data[i][j]);
-	}
-	*/
-	
-	getDataFromFile(filePath,data);
-	/*
-     //output inital matix
-	printf("the initil matix is :\n");
-	for(i=0;i<13;i++){
-		printf("\n");
-	    for(j =0;j<13;j++)
-	        printf(" %f ",data[i][j]);
-	}
-	*/
-
-	// get useful data
-	realRows = getRowNumber(data);
-	realColumns = getColumnNumber(data);
-	formatData = getFormatData(data);
-
-}
 
 int getRowNumber(double (*original)[N]){
 	//get row number
@@ -295,6 +323,7 @@ void calculateByType(char typeOfOperation){
 	}else if(typeOfOperation == '2'){
 		// call function for cuttings
 		printf("%s\n", "you have choose to use cutting");
+
 	}else if(typeOfOperation == '3'){
 		// call function for binary tree
 		printf("%s\n", "you have choose to use binary");
@@ -309,20 +338,22 @@ void calculateByType(char typeOfOperation){
 
 void calculateSimplex(double ** matrix,int rows, int columns){
 	//printf("hello" );
+	char* optimizedType = *(matrix[rows-1])==1?"min":"max";
 	int type = getSimplexType(matrix,rows,columns);
 	double ** simplexMatrix ; 
 	printf("type of simplex is %d \n",type );
 	if(type == 2){
 		printf("%s\n","this is two phases simplex" );
-		simplexMatrix = SimplyToNormalSimplex(matrix, rows, columns);
+		simplexMatrix = SimplyToNormalSimplexMatrix(matrix, rows, columns);
 	}else{
 		printf("%s\n","this is normal simplex" );
-		simplexMatrix = NormalSimplex(matrix,rows,columns);
+		simplexMatrix = NormalizeSimplexMatrix(matrix,rows,columns);
 	}
 	
 	if(simplexMatrix != NULL){
 		int NormalSimplexRows = rows;
 		int NormalSimplexColumns = (columns - 2) +(rows - 1) +3;
+		printf("your optimizedType is :%s\n",optimizedType );
 		printfAllDataInArray(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
 		solveNormalSimplex(simplexMatrix,NormalSimplexRows,NormalSimplexColumns);
 	}else{
@@ -346,7 +377,7 @@ int getSimplexType(double ** matrix, int row, int columns){
 	return type;
 }
 //phase 1 reduce to normal simplex.
-double **  SimplyToNormalSimplex(double ** matrix, int rows, int columns){
+double **  SimplyToNormalSimplexMatrix(double ** matrix, int rows, int columns){
 	
 	int numberAV =  getArtificialVariableNumber(matrix,rows,columns);
 	int initialMatrixRows = rows + 1; //add one new row for U
@@ -370,12 +401,13 @@ double **  SimplyToNormalSimplex(double ** matrix, int rows, int columns){
 	}
 	
 }
+//initial matrix for the first step simplex
 double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 	// there exist some cases :
 	//  <= b1 b1 greater than 0
 	//  >= b2 b2 less than 0 then reverse and add one artificial variable 
 	//  =  b3 add one artificial variable
-	int i = 0, j = 0;
+	int i = 0, j = 0 , typeFactor;
 	int numberAV = getArtificialVariableNumber(matrix, rows, columns);
 	int initialMatrixRows = rows + 1; //add one new row for U
 	int initialMatrixColumns = columns - 2 + rows + numberAV + 2;// matrix with artificial variable 
@@ -399,9 +431,13 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 
 		//initial the variables matrix  
 		for( j = 1 ; j < columns-2 + 1 ; j++){
+			typeFactor = 1; 
+			if(*(matrix[i]) == 1 ){
+				typeFactor = -1;
+			}
 			if( i == rows - 1){
-				*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j);//for target rows
-				*(initalMatrixWithArtificialVariable[i]) = *(matrix[i]);
+				*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j) * typeFactor;//for target rows
+				*(initalMatrixWithArtificialVariable[i]) = 2; // always convert the max
 			}else{
 				*(initalMatrixWithArtificialVariable[i]+j) = *(matrix[i]+j-1);
 			}
@@ -409,12 +445,14 @@ double ** initialSimplexPhases1Matrix(double ** matrix,int rows,int columns){
 		}
 		//initial the slack for each row;
 		for(; j < columns - 2 + 1 + rows-1 ; j++){
-			if(j != columns -2 + 1 + i ){
+			if(j != columns -2 + 1 + i ){ 
 				*(initalMatrixWithArtificialVariable[i]+j) = 0;
-			}else if(*(matrix[i]+columns-2) == 3 ){
+			}else if(*(matrix[i]+columns-2) == 3 ){ //<= 
 				*(initalMatrixWithArtificialVariable[i]+j) = 1;
-			}else if(*(matrix[i]+columns-2) == 5){
+			}else if(*(matrix[i]+columns-2) == 5){  // >=
 				*(initalMatrixWithArtificialVariable[i]+j) = -1;
+			}else{ // =
+				*(initalMatrixWithArtificialVariable[i]+j) = 0;
 			}
 		}
 		//initial the artificial variable
@@ -515,7 +553,7 @@ double * getBaseVariable(double ** matrix, int rows, int columns){
 
 	return baseVariable;
 }
-
+// deal with the result matrix from the first phases and convert into normal simplex matrix
 double ** formatPhases1Matrix(double ** matrix, int rows, int columns , int numberAV){
 	if(matrix != NULL){
 		double ** matrixWithoutAV = malloc((rows - 1 + columns - 1)*(sizeof(double)));
@@ -551,9 +589,9 @@ double ** formatPhases1Matrix(double ** matrix, int rows, int columns , int numb
 
 //phase 2 . all the inequallent is less than 
 //columns equals to the number of variable plus one sign and one result.
-double ** NormalSimplex(double ** matrix, int rows,int columns){
+double ** NormalizeSimplexMatrix(double ** matrix, int rows,int columns){
 	//table method 
-	int i = 0 , j = 0;
+	int i = 0 , j = 0 , factor;
 	int columnsNumber = (columns - 2)+(rows-1)+3;
 	double ** SimplexMatrix = malloc((rows+columnsNumber)*sizeof(double));
 	double * rowData ;
@@ -571,8 +609,13 @@ double ** NormalSimplex(double ** matrix, int rows,int columns){
 	for(i =0;i<rows;i++){
 		if(i == rows -1){
 			//printf("the length is %d and %d\n",columnsNumber,rows );
-			for(j=0;j<columns;j++){
-				*(SimplexMatrix[i]+j) = *(matrix[i]+j);
+			factor = 1;
+			if(*(matrix[i]) == 1){
+				factor = -1;
+			}
+			for(j=1;j<columns;j++){
+				*(SimplexMatrix[i]+j) = *(matrix[i]+j) * factor;
+				*(SimplexMatrix[i]) = 2;
 			}
 			for(;j<(columns - 2 + rows - 1);j++){//initialzie the slack;
 				*(SimplexMatrix[i]+j) = 0;
@@ -619,7 +662,7 @@ void solveNormalSimplex(double ** matrix, int rows, int columns){
 		}
 	}
 	double result  = -(*(matrix[rows-1] +columns-2));
-	printf("find the opitmized result is : %f \n\n", result);
+	printf("\nfind the opitmized result is : %f \n\n", result);
 	printf("%s", "the final matrix is ");
 	//printf("%s\n","after calculate" );
 	printfAllDataInArray(matrix,rows,columns);
@@ -706,8 +749,274 @@ void calculateMatrixLineByParameter(double ** matrix,double factor,int columns,i
 }
 
 void calculateBinary(double ** matrix, int rows, int columns){
-	int numberOfVariable = columns - 2;
+	int numberOfVariable = columns - 2; //can be used to initial the choice array;
+	int numberOfInequations = rows - 1;
+	int * initialDecisionArray= malloc(numberOfVariable*(sizeof(int)));
+	// initial the arrays with -1
+	int i = 0;
+	for(;i < numberOfVariable;i++){
+		*(initialDecisionArray+i) =  -1;
+	}
 	//construct the binary tree
-	struct node root;
+	struct node * root = constructBinaryTrees(numberOfVariable,numberOfInequations,initialDecisionArray);
+	//printf("the root element ? is \n");
+	//printfBinaryNode(root);
+	solveTheBinaryTree(root, numberOfVariable,matrix,rows,columns);
 
+}
+
+struct node * constructBinaryTrees(int numberOfVariable,int numberOfInequations,int * path){
+	struct node * root  = constructOneNodeWithParameters(0,numberOfVariable,numberOfInequations,path,-1);
+
+	return root;
+}
+// when path the path should pass a new pointer so that we can directly assign to the data 
+// if the node is left then the position should be 0 otherwise should be 1
+struct node * constructOneNodeWithParameters(int deep ,int numberOfVariable , int numberOfInequations,int * pathOfParent,int positionOfNode){
+	//printf("the number of variable is %d the deep is %d",numberOfVariable,deep);
+
+	//printf("%s\n","" );
+	if(deep <= numberOfVariable ){
+		int * currentPath = malloc(numberOfVariable*sizeof(int));
+
+		// create a new array fromt the old decision array
+		ArrayPointerCopy(currentPath,pathOfParent,numberOfVariable);
+		// reconstruct the decisionArray
+		tuningDecisionArray(currentPath,numberOfVariable,deep,positionOfNode);
+
+		//construct the new node
+		struct node * currentNode = (struct node*)malloc(sizeof(struct node));
+		currentNode->decisionArray = currentPath;
+		currentNode->numberOfVariable = numberOfVariable;
+		currentNode->deep = deep;
+		currentNode->z = 0;
+		currentNode->theta = malloc(numberOfInequations*sizeof(double));// how many inequations.
+		currentNode->numberOfInequations = numberOfInequations;
+		currentNode->left = constructOneNodeWithParameters(deep + 1 ,numberOfVariable, numberOfInequations, currentPath,0);
+		currentNode->right = constructOneNodeWithParameters(deep + 1 ,numberOfVariable, numberOfInequations, currentPath,1);
+
+		return currentNode;
+	}else{
+		return NULL;
+	}
+}
+void tuningDecisionArray(int * currentPath,int numberOfVariable,int deep, int positionOfNode){
+	int i = 0;
+	for(i = deep ; i < numberOfVariable ; i++){
+		*(currentPath+i) = -1;
+	}
+	if(deep > 0 ){ // if not the root node; if the root node do nothing for the current path
+		if(positionOfNode == 0){
+			*(currentPath+deep - 1 ) = 0;
+				//printf("the index is %d, the  value is %d\n", deep ,*(currentPath+deep - 1 ));
+		}else {
+			*(currentPath+deep - 1 ) = 1;
+				//printf("the index is %d, the  value is %d\n", deep ,*(currentPath+deep - 1 ));
+		}
+	}
+	//*(intArray + deep -1 )
+}
+void solveTheBinaryTree(struct node * root ,int numberOfVariable, double ** matrix, int rows, int columns){
+	
+	calculateForEachNode(NULL,root,numberOfVariable, matrix,rows,columns);
+	
+	struct node * maxNode  = malloc(sizeof(struct node));
+	maxNode->z = 0;
+	//printfBinaryNode(root);
+
+	//printfBinaryNode(maxNode);
+	//printfBinaryTree(root);
+	//tail recurision
+	findOptimizedNodeFromTree(NULL,root,maxNode);
+	//print the result 
+	
+	printf("the optimized result is ：\nthe value for the variable is :\n");
+	printfIntArray(maxNode->decisionArray,numberOfVariable);
+	printf("\nthe max z  is %f\n",maxNode->z);
+}
+
+void calculateForEachNode(struct node * pathOfParent,struct node * currentNode,int numberOfVariable,double ** matrix, int rows, int columns){
+	// calculate current node
+	if(pathOfParent != NULL){
+		//calcuate the z and the theta variable 
+
+		//calculate the z value :
+		currentNode->z = calculateZValueByDecision(currentNode->decisionArray,numberOfVariable,matrix,rows,columns);
+
+		// calculate the theta arrays;
+		currentNode->theta = calculateThetaValueByDecision(currentNode->decisionArray,numberOfVariable,currentNode->numberOfInequations,matrix,rows,columns);
+
+	}else{
+		//this is root node 
+		//calculate the z value :
+		currentNode->z = 0;//calculateZValueByDecision(currentNode->decisionArray,numberOfVariable,matrix,rows,columns);
+
+		// calculate the theta arrays;
+		currentNode->theta = calculateThetaValueByDecision(currentNode->decisionArray,numberOfVariable,currentNode->numberOfInequations,matrix,rows,columns);
+	}
+
+
+	if(currentNode->left != NULL){
+		//printf("left\n");
+		calculateForEachNode(currentNode,currentNode->left,numberOfVariable,matrix,rows,columns);
+	}
+
+	if(currentNode->right != NULL){
+		//printf("right\n");
+		calculateForEachNode(currentNode,currentNode->right,numberOfVariable,matrix,rows,columns);
+	}
+}
+double calculateZValueByDecision(int * decisionArray,int numberOfVariable, double ** matrix, int rows, int columns){
+	double z = 0;
+	int i = 0 , j = 0;
+
+	//initial z
+	for( i = 1;i < columns-1 ;i++){
+
+		if(*(matrix[rows-1] + i ) > 0){
+			z += *(matrix[rows-1]+i);
+		}
+	}
+	i = 0; j = 1;
+	for(;i < numberOfVariable;i++){
+		if(*(decisionArray + i ) != -1 && *(decisionArray + i) == 0){
+			if(*(matrix[rows-1]+j)>0){
+				z -= *(matrix[rows-1]+j);
+			}
+
+		}else if(*(decisionArray + i ) != -1 && *(decisionArray + i) == 1){
+			// if decision  == 1 and the factor is less than 0
+			if(*(matrix[rows-1]+j) < 0){
+				z += *(matrix[rows-1]+j);
+			}
+		}
+		
+		j++;
+	}
+	
+	return z;
+
+}
+double * calculateThetaValueByDecision(int * decisionArray,int numberOfVariable,int numberOfInequations, double ** matrix, int rows, int columns){
+	double * theta = malloc(numberOfInequations *sizeof(double));
+	int i = 0 , j = 0 ;
+	// initial 
+	for(i = 0 ; i < numberOfInequations ; i++)
+		*(theta+i) = *(matrix[i]+columns-1);
+	for(i = 0; i< rows-1;i++){
+		for( j = 0 ; j< numberOfVariable ;j++ ){
+			if(*(matrix[i]+j) < 0){
+				//printf("\nexist the negative? \n");
+				*(theta+i) -= *(matrix[i]+j);
+			}
+		}
+	}
+
+	for(i = 0 ; i < numberOfInequations; i++){
+		
+		for( j = 0; j < numberOfVariable ; j++){
+			if(*(decisionArray + j) != -1 && *(decisionArray + j) == 0){
+				if(*(matrix[i]+j)<=0){
+					*(theta+i) += *(matrix[i]+j);
+				}
+			}else if(*(decisionArray + j ) != -1 && *(decisionArray + j) == 1){
+				if(*(matrix[i]+j) > 0){
+					*(theta+i) -= *(matrix[i]+j);
+				}
+			}
+		}
+		
+	}
+
+	return theta;
+
+}
+//central left right. just need to check the leaf node.
+void findOptimizedNodeFromTree(struct node * parentNode,struct node * currentNode,struct node * maxNode){
+	/*
+	printf("\nthe z in current node is %f, the current node is :\n",node->z);
+	printfIntArray(node->decisionArray,node->numberOfVariable);
+	printf("\n");
+	*/
+	
+	if((currentNode->left == NULL) &&(currentNode->right == NULL) && (currentNode->z >= maxNode->z)&&checkFeasible(currentNode)){
+		*maxNode = *currentNode;
+	}
+	
+	
+	if(currentNode->right != NULL){
+		findOptimizedNodeFromTree(currentNode,currentNode->right,maxNode);
+		
+	}
+
+
+	if(currentNode->left != NULL){
+		findOptimizedNodeFromTree(currentNode,currentNode->left,maxNode);
+	}
+
+}
+// if all variable in theta is positive then return true;
+bool checkFeasible(struct node * node ){
+	bool result = true;
+	int i = 0;
+	for(;i < node->numberOfInequations;i++){
+		if(*((node->theta)+i) < 0){
+			result = false;
+		}
+	}
+	return result;
+}
+void ArrayPointerCopy(int * newArray, int * oldArray,int length){
+	int i = 0;
+	for(;i < length ; i++){
+		*(newArray+i) = *(oldArray+i);
+	}
+}
+void printfIntArray(int * intArray,int length){
+	//printf("%s\n"," the path is :" );
+	int i = 0; 
+	
+	for(;i<length;i++){
+		printf("%d",*(intArray+i) );
+	}
+}
+void printfDoubleArray(double * doubleArray,int length){
+	//printf("%s\n"," the path is :" );
+	int i = 0; 
+	
+	for(;i<length;i++){
+		printf("%f ",*(doubleArray+i) );
+	}
+	
+}
+void printfBinaryTree(struct node * node){
+	//struct node * indexPoint = root;
+	printf("the path of this node is  :\n");
+	printfIntArray(node->decisionArray,node->numberOfVariable);
+	printf("the deep of this node is %d\n",node->deep );
+	printf("the z value of this node is %f\n",node->z );
+	printf("the theta array is :\n");
+	printfDoubleArray(node->theta,2);
+	printf("\n\n");
+	if(node->left != NULL){
+		printfBinaryNode(node->left);
+	}
+
+	if(node->right != NULL){
+		printfBinaryNode(node->right);
+	}
+	
+}
+
+void printfBinaryNode(struct node * node){
+	//struct node * indexPoint = root;
+	printf("the path of this node is  :\n");
+	printfIntArray(node->decisionArray,node->numberOfVariable);
+	printf("the deep of this node is %d\n",node->deep );
+	printf("the z value of this node is %f\n",node->z );
+	printf("the theta array is :\n");
+	printfDoubleArray(node->theta,2);
+	printf("\n\n");
+
+	
 }
